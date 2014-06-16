@@ -1,0 +1,18 @@
+- name: Build SSD Block Storage Volume
+  gather_facts: False
+  hosts: local
+  connection: local
+  tasks:
+    - name: Storage volume create request
+      local_action:
+        module: rax_cbs
+        name: ssdvolume
+        description: SSD Test Volume
+        volume_type: SSD
+        size: 150
+        region: IAD
+        wait: yes
+        state: present
+        meta:
+          app: my-cool-app
+      register: ssd-volume
