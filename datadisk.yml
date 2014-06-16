@@ -1,0 +1,63 @@
+- name: Create Instance
+  hosts: local
+  gather_facts: False
+  tasks:
+    - name: Server build request
+      local_action:
+        module: rax
+        name: datadisk-test-%01d
+        count: 1
+        exact_count: yes
+        key_name: ansible_demo
+        flavor: performance1-1 
+        image: 5cc098a5-7286-4b96-b3a2-49f4c4f82537
+        wait: yes
+        group: docker
+        state: present
+      register: raxtest
+    - name: Add new instance to host group
+      local_action: add_host hostname={{ item.accessIPv4 }} groupname=docker
+      with_items: raxtest.instances
+- name: Build SSD Block Storage Volume
+  gather_facts: False
+  hosts: local
+  connection: local
+  tasks:
+    - name: Storage volume create request
+      local_action:
+        module: rax_cbs
+        name: ssd-volume
+        description: SSD Test Volume
+        volume_type: SSD
+        size: 100
+        region: IAD
+        wait: yes
+        state: present
+        meta:
+          app: my-cool-app
+      register: ssd_volume
+- name: Attach SSD Block Storage Volume
+  gather_facts: False
+  hosts: local
+  connection: local
+  tasks:
+    - name: Storage volume attach request
+      local_action:
+        module: rax_cbs_attachments
+        volume: ssd_volume
+        server: datadisk-test-1
+        device: /dev/xvdd
+        region: IAD
+        wait: yes
+        state: present
+      register: my_volume
+- name: Create filesystems
+  hosts: docker
+  user: root
+  tasks:
+    - name: Make filesystem on the disks
+      shell: mkfs -t ext3 /dev/xvdd 
+    - name: mkdir /data2
+      shell: mkdir /data2
+    - name: Mount disk to /data2
+      shell: mount /dev/xvdd /data2

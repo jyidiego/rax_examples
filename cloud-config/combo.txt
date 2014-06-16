@@ -1,0 +1,29 @@
+#cloud-config
+#values are for performance1-2 flavor with 1 additional data disks
+#remove label blocks as appropriate for other flavors
+
+fs_setup:
+
+ - label: None
+   filesystem: 'ext3'
+   device: '/dev/xvde1'
+   partition: 'auto'
+
+mounts:
+
+ - [ /dev/xvde1, /data1 ]
+
+# mount_default_fields
+# These values are used to fill in any entries in 'mounts' that are not
+# complete.  This must be an array, and must have 7 fields.
+
+mount_default_fields: [ None, None, "ext3", "defaults,noatime", "0","2" ]
+
+packages:
+
+ - docker.io
+
+runcmd:
+
+ - ln -sf /usr/bin/docker.io /usr/local/bin/docker
+ - sed -i '$acomplete -F _docker docker' /etc/bash_completion.d/docker.io
